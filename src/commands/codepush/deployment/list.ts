@@ -3,6 +3,7 @@ import { out } from "../../../util/interaction";
 import { DefaultApp } from "../../../util/profile";
 import { inspect } from "util";
 import { MobileCenterClient, models, clientRequest } from "../../../util/apis";
+const _ = require("lodash");
 
 const debug = require("debug")("mobile-center-cli:commands:codepush:deployments:list");
 
@@ -14,9 +15,7 @@ export default class ListCommand extends AppCommand {
 
   async run(client: MobileCenterClient): Promise<CommandResult> {
     const app = this.app;
-
     let deployments: models.Deployment[];
-
     try {
       const httpRequest = await out.progress("Getting codepush deployments ...", clientRequest<models.Deployment[]>(
         (cb) => client.deployments.list(app.ownerName, app.appName, cb)));
@@ -25,11 +24,7 @@ export default class ListCommand extends AppCommand {
       debug(`Failed to get list of codepush deployments - ${inspect(error)}`);
       return failure(ErrorCodes.Exception, "failed to get list of deployments for the app");
     }
-
-    out.reportNewLineSeparatedArray([
-      ["Name", "name"]
-    ], deployments);
-
+    out.table(out.getCommandOutputTableOptions(["Name", "Key"]), deployments.map((deployment) => [deployment.name, deployment.key]));
     return success();
   }
 }
